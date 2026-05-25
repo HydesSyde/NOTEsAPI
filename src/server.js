@@ -7,4 +7,5 @@ const server = http.createServer(app);
 
 server.listen(PORT, () => {
   console.log(`server is live on http://localhost:${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
 });
