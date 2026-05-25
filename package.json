@@ -1,0 +1,39 @@
+{
+  "name": "notesapi",
+  "version": "1.0.0",
+  "description": "A backend service that allows users to create, read, update, and delete notes, while following best practices in API design, security, and documentation",
+  "keywords": [
+    "notes",
+    "api",
+    "backend",
+    "service"
+  ],
+  "homepage": "https://github.com/HydesSyde/NOTEsAPI#readme",
+  "bugs": {
+    "url": "https://github.com/HydesSyde/NOTEsAPI/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HydesSyde/NOTEsAPI.git"
+  },
+  "license": "ISC",
+  "author": "Michael Igbanei HydesSyde",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "morgan": "^1.10.1",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^14.0.0",
+    "yamljs": "^0.3.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
