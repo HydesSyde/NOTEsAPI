@@ -1,4 +1,4 @@
-import { notes } from "../data/notes.store.js";
+import { notes } from "../schema/notes.js";
 import { createSchema } from "../validator/notes.validator.js";
 import { v4 as uuidv4 } from "uuid";
 

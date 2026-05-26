@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { db } from "../db.js";
 import { users } from "../schema/user.js";
+import { eq } from "drizzle-orm";
 
 //regex for password. Requires uppercase, lowercase, number, special character and min of 8 characters
 const passwordRegex =
@@ -10,28 +11,28 @@ const passwordRegex =
 // --SIGNUP--
 const signUp = async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, passWord } = req.body;
 
-    if (!fullName || !password || !email) {
+    if (!fullName || !passWord || !email) {
       return res.status(400).json({
         message: "No input found",
       });
     }
 
-    if (!passwordRegex.test(password)) {
+    if (!passwordRegex.test(passWord)) {
       return res.status(400).json({
         message: "Password validation failed",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(passWord, 10);
 
     const newUser = await db
       .insert(users)
       .values({
         fullName,
         email,
-        password: hashedPassword,
+        passWord: hashedPassword,
       })
       .returning();
 
@@ -54,7 +55,7 @@ const signUp = async (req, res) => {
 // --SIGNIN--
 const signIn = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, passWord } = req.body;
 
     const foundUser = await db
       .select()
@@ -66,8 +67,8 @@ const signIn = async (req, res) => {
     }
 
     const correctPassword = await bcrypt.compare(
-      password,
-      foundUser[0].password,
+      passWord,
+      foundUser[0].passWord,
     );
 
     if (!correctPassword) {
