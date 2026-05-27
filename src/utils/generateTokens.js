@@ -15,4 +15,16 @@ const generateAccessToken = (user) => {
   );
 };
 
-export { generateAccessToken };
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+    },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRES,
+    },
+  );
+};
+
+export { generateAccessToken, generateRefreshToken };

@@ -1,4 +1,5 @@
 import express from "express";
+import { authMiddleware } from "../middleware/auth.midleware.js";
 import {
   getAllNotes,
   createNote,
@@ -8,9 +9,11 @@ import {
 
 const router = express.Router();
 
-router.get("/", getAllNotes);
-router.post("/", createNote);
-router.patch("/:id", updateNote);
-router.delete("/:id", deleteNote);
+router.use(authMiddleware);
+
+router.get("/getAllNotes", getAllNotes);
+router.post("/createNewNote", createNote);
+router.patch("/updateNote/:id", updateNote);
+router.delete("/deleteNote/:id", deleteNote);
 
 export default router;

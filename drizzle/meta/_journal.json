@@ -15,6 +15,13 @@
       "when": 1779891485416,
       "tag": "0001_unique_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779895322261,
+      "tag": "0002_yellow_redwing",
+      "breakpoints": true
     }
   ]
 }

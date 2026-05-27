@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 import { db } from "../db.js";
 import { users } from "../schema/user.js";
 import { eq } from "drizzle-orm";
-import { generateAccessToken } from "../utils/generateTokens.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/generateTokens.js";
 import {
   userSignInValidator,
   userSingUpValidator,
@@ -56,6 +59,8 @@ const signUp = async (req, res) => {
         email,
         passWord: hashedPassword,
         role: "user",
+        refreshToken: "",
+        resetToken: "",
       })
       .returning();
 
@@ -105,7 +110,18 @@ const signIn = async (req, res) => {
     //generate access token
     const token = generateAccessToken(foundUser[0]);
 
-    res.status(201).json({ message: "User sign in successfully", token });
+    //generate refreshToken
+    const refreshToken = generateRefreshToken(foundUser[0]);
+
+    //add to database
+    await db
+      .update(users)
+      .set({ refreshToken })
+      .where(eq(users.id, foundUser[0].id));
+
+    res
+      .status(201)
+      .json({ message: "User sign in successfully", token, refreshToken });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Sign in failed.Internal Server Error" });
