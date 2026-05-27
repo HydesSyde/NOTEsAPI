@@ -8,6 +8,13 @@
       "when": 1779832681549,
       "tag": "0000_typical_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779891485416,
+      "tag": "0001_unique_midnight",
+      "breakpoints": true
     }
   ]
 }

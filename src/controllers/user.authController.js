@@ -3,6 +3,11 @@ import jwt from "jsonwebtoken";
 import { db } from "../db.js";
 import { users } from "../schema/user.js";
 import { eq } from "drizzle-orm";
+import { generateAccessToken } from "../utils/generateTokens.js";
+import {
+  userSignInValidator,
+  userSingUpValidator,
+} from "../validator/auth.validator.js";
 
 //regex for password. Requires uppercase, lowercase, number, special character and min of 8 characters
 const passwordRegex =
@@ -11,7 +16,7 @@ const passwordRegex =
 // --SIGNUP--
 const signUp = async (req, res) => {
   try {
-    const { fullName, email, passWord } = req.body;
+    const { fullName, email, passWord } = userSingUpValidator.parse(req.body);
 
     if (!fullName || !passWord || !email) {
       return res.status(400).json({
@@ -19,27 +24,43 @@ const signUp = async (req, res) => {
       });
     }
 
+    //check for already existing user
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+
+    //if user exist, registration fails
+    if (existingUser.length) {
+      return res.status(409).json({
+        message: "Email already exists",
+        success: false,
+      });
+    }
+
+    //test for password input
     if (!passwordRegex.test(passWord)) {
       return res.status(400).json({
         message: "Password validation failed",
       });
     }
 
+    //hashing password
     const hashedPassword = await bcrypt.hash(passWord, 10);
 
+    //if all passes create successful user
     const newUser = await db
       .insert(users)
       .values({
         fullName,
         email,
         passWord: hashedPassword,
+        role: "user",
       })
       .returning();
 
     //token from jwt
-    const token = jwt.sign({ id: newUser[0].id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = generateAccessToken(newUser);
 
     res.status(201).json({
       message: "Sign-up successful",
@@ -48,24 +69,30 @@ const signUp = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Sign up failed. Try Again" });
+    res.status(500).json({ message: "Sign up failed.Internal Server Error" });
   }
 };
 
 // --SIGNIN--
 const signIn = async (req, res) => {
   try {
-    const { email, passWord } = req.body;
+    //validate user input
+    const { email, passWord } = userSignInValidator.parse(req.body);
 
+    //check if user exists in db
     const foundUser = await db
       .select()
       .from(users)
       .where(eq(users.email, email));
 
     if (!foundUser.length) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(400).json({
+        message: "User not found",
+        success: false,
+      });
     }
 
+    //check for correct password by comparing using bcrypt
     const correctPassword = await bcrypt.compare(
       passWord,
       foundUser[0].passWord,
@@ -75,14 +102,13 @@ const signIn = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: foundUser[0].id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    //generate access token
+    const token = generateAccessToken(foundUser[0]);
 
     res.status(201).json({ message: "User sign in successfully", token });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Sign in failed. Try Again" });
+    res.status(500).json({ message: "Sign in failed.Internal Server Error" });
   }
 };
 
