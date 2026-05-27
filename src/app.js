@@ -10,8 +10,8 @@ const swaggerDocument = YAML.load("./docs/openai.yaml");
 
 app.use(express.json());
 app.use("/api/v1/notes/health", health);
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/notes", noteRouter);
-app.use("/api/v1/notes", authRouter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 export default app;

@@ -1,31 +1,29 @@
+import { eq } from "drizzle-orm";
+import { db } from "../db.js";
 import { notes } from "../schema/notes.js";
 import { createSchema } from "../validator/notes.validator.js";
 import { v4 as uuidv4 } from "uuid";
 
 //Get all notes
-const getAllNotes = (req, res) => {
+const getAllNotes = async (req, res) => {
   try {
-    const result = [...notes];
+    const { search, page = 1, limit } = req.query;
 
-    const { search, sort, order, page = 1, limit } = req.query;
+    let query = db.select().from(notes);
 
     //filtering
     if (search) {
-      result.filter((note) => {
-        note.toLowerCase().includes(search.toLowerCase());
-      });
+      query = query.where(sql`${notes.title} ILIKE ${"%" + search + "%"}`);
     }
 
     //pagination
-    const start = (page - 1) * limit;
-    const end = start + Number(limit);
-
-    const paginatedNotes = result.splice(start, end);
+    const offset = (page - 1) * limit;
+    const result = await query.limit(Number(limit)).offset(offset);
 
     res.status(200).json({
       success: true,
       total: result.length,
-      data: paginatedNotes,
+      data: result,
     });
   } catch (error) {
     console.error(error);
@@ -34,22 +32,23 @@ const getAllNotes = (req, res) => {
 };
 
 //Create new Notes
-const createNote = (req, res) => {
+const createNote = async (req, res) => {
   try {
     const validatedSchema = createSchema.parse(req.body);
 
-    const newNote = {
-      id: uuidv4(),
-      ...validatedSchema,
-      createdAt: Date.now(),
-      upDatedAt: Date.now(),
-    };
-
-    notes.push(newNote);
+    const [newNote] = await db
+      .insert(notes)
+      .values({
+        userId: req.user.id,
+        title: validatedSchema.title,
+        body: validatedSchema.body,
+      })
+      .returning();
 
     res.status(200).json({
       success: true,
       data: newNote,
+      message: "New Note Created",
     });
   } catch (error) {
     console.error(error);
@@ -58,49 +57,61 @@ const createNote = (req, res) => {
 };
 
 //Update a Note by its id
-const updateNote = (req, res) => {
+const updateNote = async (req, res) => {
   try {
-    const note = notes.find((note) => note.id === req.params.id);
+    const { id } = req.params;
+    const { title, body } = req.body;
 
-    if (!note) {
+    const [updatedNote] = await db
+      .update(notes)
+      .set({
+        ...(title && { title }),
+        ...(body && { body }),
+      })
+      .where(eq(notes.id, Number(id)))
+      .returning();
+
+    if (!updatedNote) {
       return res.status(404).json({
         success: false,
         message: "Note not found",
       });
     }
 
-    if (req.body.title) note.title = req.body.title;
-    if (req.body.body) note.body = req.body.body;
-
-    note.updatedAt = new Date();
-
     res.status(200).json({
       success: true,
       message: "Note updated successfully",
-      data: note,
+      data: updatedNote,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Unable to find notes" });
+    res.status(500).json({ message: "Unable to update notes" });
   }
 };
 
-const deleteNote = (req, res) => {
-  const noteIndex = notes.findIndex((note) => note.id === req.params.id);
+const deleteNote = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  if (noteIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      message: "Note not found",
+    const deletedNote = await db
+      .delete(notes)
+      .where(eq(notes.id, Number(id)))
+      .returning();
+
+    if (!deletedNote.length) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Note not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Note deleted successfully",
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to delete note" });
   }
-
-  notes.splice(noteIndex, 1);
-
-  res.status(200).json({
-    success: true,
-    message: "Note deleted successfully",
-  });
 };
 
 export { getAllNotes, createNote, updateNote, deleteNote };
