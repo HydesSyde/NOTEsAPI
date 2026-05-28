@@ -8,4 +8,6 @@ export const notes = pgTable("notes", {
     .notNull(),
   title: varchar("title", { length: 50 }).notNull(),
   body: varchar("body", { length: 1000 }).notNull(),
+  summary: varchar("suummary").notNull(),
+  tags: varchar("tags").notNull(),
 });
