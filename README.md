@@ -43,3 +43,22 @@ Tagging/categorization of notes
 Search & filtering
 
 Pagination
+
+## AI Features
+
+- AI-generated note summaries
+- AI-generated tags
+- Groq LLM integration
+- Cached summaries/tags
+
+## Security
+
+- Environment variables for secrets
+- JWT authentication
+- Protected routes
+
+## Reliability
+
+- Timeout handling
+- API failure handling
+- Rate-limit protection
