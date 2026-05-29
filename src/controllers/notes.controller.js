@@ -3,6 +3,7 @@ import { db } from "../db.js";
 import { notes } from "../schema/notes.js";
 import { createSchema } from "../validator/notes.validator.js";
 import { v4 as uuidv4 } from "uuid";
+import { generateSummary } from "../services/groq.services.js";
 
 //Get all notes
 const getAllNotes = async (req, res) => {
@@ -114,4 +115,47 @@ const deleteNote = async (req, res) => {
   }
 };
 
-export { getAllNotes, createNote, updateNote, deleteNote };
+const generateNoteTags = async (req, res) => {
+  try {
+    const NoteId = req.params.id;
+    const note = await db
+      .select()
+      .from(notes)
+      .where(eq(notes.id, Number(NoteId)));
+
+    if (!note) {
+      return res.status(401).json({
+        sucees: false,
+        message: "There are no notes",
+      });
+    }
+
+    if (note[0].tags && note[0].tags.length > 0) {
+      return res.status(200).json({
+        success: true,
+        cached: true,
+        tags: note.tags,
+      });
+    }
+
+    const generatedTags = generateSummary(note[0].body);
+
+    const tagsArray = generatedTags.split(",").map((tag) => tag.trim());
+
+    await db
+      .update(notes)
+      .set({ tags: tagsArray })
+      .where(eq(notes.id, Number(NoteId)));
+
+    res.status(200).json({
+      success: true,
+      cached: false,
+      tags: tagsArray,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to generate tags for note" });
+  }
+};
+
+export { getAllNotes, createNote, updateNote, deleteNote, generateNoteTags };
