@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const generateSummary = async (content) => {
+export const generateTag = async (content) => {
   try {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",

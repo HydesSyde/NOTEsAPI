@@ -3,7 +3,7 @@ import { db } from "../db.js";
 import { notes } from "../schema/notes.js";
 import { createSchema } from "../validator/notes.validator.js";
 import { v4 as uuidv4 } from "uuid";
-import { generateSummary } from "../services/groq.services.js";
+import { generateTag } from "../services/groq.services.js";
 
 //Get all notes
 const getAllNotes = async (req, res) => {
@@ -134,13 +134,18 @@ const generateNoteTags = async (req, res) => {
       return res.status(200).json({
         success: true,
         cached: true,
-        tags: note.tags,
+        tags: note[0].tags,
       });
     }
 
-    const generatedTags = generateSummary(note[0].body);
+    const generatedTags = generateTag(note[0].body);
 
-    const tagsArray = generatedTags.split(",").map((tag) => tag.trim());
+    //check if generatedtags is a string is an array or string before splitting
+    const tagsArray = Array.isArray(generatedTags)
+      ? generatedTags.map((tag) => tag.trim())
+      : String(generatedTags)
+          .split(",")
+          .map((tag) => tag.trim());
 
     await db
       .update(notes)
